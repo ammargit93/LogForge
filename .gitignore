@@ -3,8 +3,3 @@
 cmd/logserver/*.parquet
 /client/*.exe
 
-/cmd/
-/db/
-/handlers/
-/models/
-/parquet/
