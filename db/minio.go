@@ -2,44 +2,56 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
 
-func UploadToMinIO(minioClient *minio.Client, service string, user string) {
+func UploadToMinIO(minioClient *minio.Client, service string, user string) error {
 	bucketName := "logs"
 	location := "us-east-1"
 
+	// Create bucket if not exists
 	err := minioClient.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{Region: location})
 	if err != nil {
 		exists, errBucketExists := minioClient.BucketExists(context.Background(), bucketName)
 		if errBucketExists == nil && exists {
 			log.Printf("Bucket %s already exists\n", bucketName)
 		} else {
-			log.Fatalln(err)
+			return fmt.Errorf("failed to create bucket: %v", err)
 		}
 	} else {
 		log.Printf("Successfully created bucket %s\n", bucketName)
 	}
-	currYear := time.Now().Year()
-	currMonth := time.Now().Month()
-	currDay := time.Now().Day()
-	logId := uuid.New()
-	logFileName := service + "_" + strconv.Itoa(currYear) + "_" + currMonth.String() + "_" + strconv.Itoa(currDay) + "_" + logId.String() + ".parquet"
 
-	path := []string{user, service, strconv.Itoa(currYear), currMonth.String(), strconv.Itoa(currDay), logFileName}
-	objectName := strings.Join(path, "/")
+	// Create folder path: username/service/yyyy-mm-dd/<uuid>.parquet
+	now := time.Now()
+	year := strconv.Itoa(now.Year())
+	month := fmt.Sprintf("%02d", now.Month())
+	day := fmt.Sprintf("%02d", now.Day())
+	logID := uuid.New().String()
+	logFileName := logID + ".parquet"
+
+	date := year + "-" + month + "-" + day
+	// Use path.Join() instead of filepath.Join() to ensure forward slashes
+	objectPath := path.Join(user, service, date, logFileName)
+
+	// Upload
 	filePath := "dummy.parquet"
 	contentType := "application/octet-stream"
 
-	_, err = minioClient.FPutObject(context.Background(), bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
+	_, err = minioClient.FPutObject(context.Background(), bucketName, objectPath, filePath, minio.PutObjectOptions{
+		ContentType: contentType,
+	})
 	if err != nil {
-		log.Fatalln(err)
+		return fmt.Errorf("failed to upload object: %v", err)
 	}
-	log.Printf("Successfully uploaded %s\n", objectName)
+
+	log.Printf("✅ Uploaded to MinIO: %s\n", objectPath)
+	return nil
 }

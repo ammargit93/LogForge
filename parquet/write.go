@@ -24,7 +24,7 @@ func connectToMinIO() *minio.Client {
 	return minioClient
 }
 
-var minioClient = connectToMinIO()
+var MinioClient = connectToMinIO()
 
 func WriteToParquet(buffer []models.LogEntry) {
 	filename := "dummy.parquet"
@@ -49,9 +49,10 @@ func WriteToParquet(buffer []models.LogEntry) {
 		}
 	}
 
-	db.UploadToMinIO(minioClient, "auth-service", "ITsMe")
 	if err := pw.WriteStop(); err != nil {
 		fmt.Println("WriteStop error:", err)
 	}
 	fw.Close()
+
+	db.UploadToMinIO(MinioClient, "auth-service", "ITsMe")
 }

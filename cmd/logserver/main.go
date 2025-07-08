@@ -17,7 +17,7 @@ import (
 func main() {
 	router := gin.Default()
 	router.POST("/logs", handlers.HandleLog)
-	// query route
+	router.POST("/query", handlers.HandleQuery)
 	log.Println("🚀 Server running on http://localhost:8080")
 	router.Run(":8080")
 }
