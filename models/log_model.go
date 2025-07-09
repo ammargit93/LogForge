@@ -9,6 +9,10 @@ type LogEntry struct {
 	Service   string `json:"service" binding:"required" parquet:"name=service, type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY"`
 	Host      string `json:"host" binding:"required" parquet:"name=host, type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY"`
 }
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 var BufferQueue []LogEntry
 var Mu sync.Mutex

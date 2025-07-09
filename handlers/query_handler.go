@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"log-engine/parquet"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -17,6 +18,13 @@ type Query struct {
 
 func HandleQuery(c *gin.Context) {
 	var query Query
+	username, _ := parquet.GetCreds()
+	dataPath := extractParquetPath(query.Message)
+	arr := strings.Split(dataPath, "/")[0]
+	if username != arr {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad username"})
+		return
+	}
 	if err := c.ShouldBindJSON(&query); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -24,8 +32,6 @@ func HandleQuery(c *gin.Context) {
 
 	log.Println("Received SQL Query:", query.Message)
 
-	// Step 1: Extract FROM path
-	dataPath := extractParquetPath(query.Message)
 	if dataPath == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not extract path from SQL query"})
 		return

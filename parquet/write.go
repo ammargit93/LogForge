@@ -26,8 +26,12 @@ func connectToMinIO() *minio.Client {
 
 var MinioClient = connectToMinIO()
 
-func WriteToParquet(buffer []models.LogEntry) {
+func WriteToParquet(buffer []models.LogEntry, servicename, username string) {
 	filename := "dummy.parquet"
+	uname, _ := GetCreds()
+	if username != uname {
+		return
+	}
 	fw, err := local.NewLocalFileWriter(filename)
 	if err != nil {
 		fmt.Println("WriteToParquet Error", err)
@@ -54,5 +58,5 @@ func WriteToParquet(buffer []models.LogEntry) {
 	}
 	fw.Close()
 
-	db.UploadToMinIO(MinioClient, "auth-service", "ITsMe")
+	db.UploadToMinIO(MinioClient, servicename, username)
 }

@@ -8,10 +8,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/urfave/cli/v2"
 )
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func credsFilePath() string {
+	home, _ := os.UserHomeDir()
+	return home + "/.logcli/creds.json"
+}
 
 type LogEntry struct {
 	Timestamp time.Time `json:"timestamp"`
@@ -88,14 +99,54 @@ func main() {
 						return fmt.Errorf("failed to parse response: %w", err)
 					}
 					if output, ok := result["output"]; ok {
-						fmt.Println("────────────────────────────────────")
+						// fmt.Println("────────────────────────────────────")
 						fmt.Println(output)
-						fmt.Println("────────────────────────────────────")
 					} else {
 						fmt.Println("❌ No 'output' field found in server response:")
 						fmt.Println(string(body))
 					}
 
+					return nil
+				},
+			},
+			{
+				Name:  "login",
+				Usage: "Log in and store credentials",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "username", Usage: "Username", Required: true},
+					&cli.StringFlag{Name: "password", Usage: "Password", Required: true},
+				},
+				Action: func(c *cli.Context) error {
+					creds := Credentials{
+						Username: c.String("username"),
+						Password: c.String("password"),
+					}
+					path := credsFilePath()
+					os.MkdirAll(filepath.Dir(path), 0700)
+					data, _ := json.Marshal(creds)
+					err := os.WriteFile(path, data, 0600)
+					if err != nil {
+						return fmt.Errorf("failed to save credentials: %w", err)
+					}
+					resp, err := http.Post("http://localhost:8080/login", "application/json", bytes.NewBuffer(data))
+					if err != nil {
+						return err
+					}
+					defer resp.Body.Close()
+
+					fmt.Println("✅ Logged in successfully.")
+					return nil
+				},
+			},
+			{
+				Name:  "logout",
+				Usage: "Clear stored credentials",
+				Action: func(c *cli.Context) error {
+					path := credsFilePath()
+					if err := os.Remove(path); err != nil {
+						return fmt.Errorf("failed to delete credentials: %w", err)
+					}
+					fmt.Println("✅ Logged out successfully.")
 					return nil
 				},
 			},

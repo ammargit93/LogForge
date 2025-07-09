@@ -14,13 +14,13 @@ func HandleLog(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	username, _ := parquet.GetCreds()
 	models.Mu.Lock()
 	models.BufferQueue = append(models.BufferQueue, logEntry)
 	if len(models.BufferQueue) >= models.N {
 		bufferCopy := make([]models.LogEntry, len(models.BufferQueue))
 		copy(bufferCopy, models.BufferQueue)
-		go parquet.WriteToParquet(bufferCopy)
+		go parquet.WriteToParquet(bufferCopy, logEntry.Service, username)
 		models.BufferQueue = []models.LogEntry{}
 	}
 	models.Mu.Unlock()
