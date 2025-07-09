@@ -19,17 +19,19 @@ type Query struct {
 func HandleQuery(c *gin.Context) {
 	var query Query
 	username, _ := parquet.GetCreds()
-	dataPath := extractParquetPath(query.Message)
-	arr := strings.Split(dataPath, "/")[0]
-	if username != arr {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad username"})
-		return
-	}
+
 	if err := c.ShouldBindJSON(&query); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	dataPath := extractParquetPath(query.Message)
+	arr := strings.Split(dataPath, "/")[0]
+	log.Println(arr)
+	log.Println(username)
+	if username != arr {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad username"})
+		return
+	}
 	log.Println("Received SQL Query:", query.Message)
 
 	if dataPath == "" {
