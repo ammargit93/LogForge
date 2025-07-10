@@ -10,24 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// func credsFilePath() string {
-// 	home, _ := os.UserHomeDir()
-// 	return home + "/.logcli/creds.json"
-// }
-// func GetCreds() (string, string) {
-// 	path := credsFilePath()
-// 	data, err := os.ReadFile(path)
-// 	if err != nil {
-// 		log.Println("Error in getting creds", err)
-// 	}
-// 	var creds Credentials
-// 	if err := json.Unmarshal(data, &creds); err != nil {
-// 		log.Fatalln("Error Unmarshalling ", err)
-// 	}
-
-// 	return creds.Username, creds.Password
-// }
-
 func HandleLogin(c *gin.Context) {
 	var credentials models.Credentials
 	data, err := io.ReadAll(c.Request.Body)
